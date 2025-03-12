@@ -1,0 +1,27 @@
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hashed Data-Base</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Resultados</h1>
+      <div class="search-section">
+        <label for="searchKey">Digite sua chave para busca:</label>
+        <input type="text" id="searchKey" />
+        <button onclick="search()">Buscar</button>
+        <button id="tableScanBtn" class="disabled" onclick="tableScan()">
+          Table Scan
+        </button>
+      </div>
+
+      <div id="tables-container"></div>
+
+      <h2>Estatísticas</h2>
+      <div id="statistics"></div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
