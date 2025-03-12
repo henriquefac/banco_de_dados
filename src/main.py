@@ -1,21 +1,25 @@
 from classes.interface.interface import InterfaceComands
 from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
 import time
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 interface: InterfaceComands = None
 
 @app.route('/')
+@cross_origin()
 def Hello():
     return "Hello world!"
 
 @app.route('/init', methods=['POST'])
+@cross_origin()
 def init_interface_object():
     global interface
     
     dados = request.get_json()
-    
     if not dados or "rpp" not in dados:
         return jsonify({"erro":"Parâmetro 'rpp' é obrigatório"}), 400
 
@@ -37,6 +41,7 @@ def init_interface_object():
     
 # retornar primeira e ultima página
 @app.route('/getPages', methods=['GET'])
+@cross_origin()
 def first_last_page():
     global interface
     
@@ -51,13 +56,14 @@ def first_last_page():
     
     # número da página e registros de cada uma
     response = {
-        "first": [0, first_page_list],
-        "last" : [interface.listPages.num_pages - 1, last_page_list]
+        "first": {"idx":0, "page":first_page_list},
+        "last" : {"idx":interface.listPages.num_pages - 1,"page": last_page_list}
     }
     return jsonify(response), 200
     
 
 @app.route('/tablescan', methods=['GET'])
+@cross_origin()
 def table_scan():
     global interface
     
@@ -90,6 +96,7 @@ def table_scan():
 
 # realisar procura com hash
 @app.route('/search', methods=['GET'])
+@cross_origin()
 def search():
     global interface
     
