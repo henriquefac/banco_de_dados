@@ -64,21 +64,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   recordsPerPage = params.get("records") || 10;
   if (window.location.pathname.includes("results.html")) {
-    fetchData(recordsPerPage);
+    fetch(`${apiUrl}/getPages`, {
+      method: "GET",
+      headers: { 
+        "Content-Type": "application/json", 
+        "Access-Control-Allow-Origin": "*" 
+      },
+    })
+      .then((response) => response.json())
+      .then(data => {
+        displayData(data)
+      })
+      .catch( erro => displayError(erro))
   }
 });
 
 function sendData() {
-  recordsPerPage = document.getElementById("recordsPerPage").value;
+  rpp = parseInt(document.getElementById("recordsPerPage").value);
 
-  // mockApi("getPages", { recordsPerPage }).then((data) => {
-  //   localStorage.setItem("initialData", JSON.stringify(data));
-  //   window.location.href = `results.html?records=${recordsPerPage}`;
-  // });
   fetch(`${apiUrl}/init`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-    body: JSON.stringify({ recordsPerPage }),
+    headers: { 
+      "Content-Type": "application/json", 
+      "Access-Control-Allow-Origin": "*" 
+    },
+    body: JSON.stringify({ rpp }),
   })
     .then((response) => response.json())
     .then((data) => {
@@ -97,77 +107,102 @@ function fetchData(records) {
 function displayData(data) {
   let resultsDiv = document.getElementById("tables-container");
   resultsDiv.innerHTML = "";
-
-  data.pages.forEach((page) => {
-    // let pag = `<h4>Página ${page.number}</h4>`;
+  
+  if(data.first?.idx == 0) {
     let table = `
-      <table>
-        <tr>
-          <th>Dados</th>
-        </tr>`;
+    <table>
+      <tr>
+        <th>Página: ${data.first.idx + 1}</th>
+      </tr>`;
 
-    page.records.forEach((record) => {
+    data.first.page.forEach((record) => {
+      table += `<tr>
+          <td>${record}</td>
+        </tr>`;
+      });
+    table += "</table>";
+
+    table += `
+    <table>
+      <tr>
+        <th>Página: ${data.last.idx + 1}</th>
+      </tr>`;
+
+    data.last.page.forEach((record) => {
       table += `<tr>
         <td>${record}</td>
       </tr>`;
     });
     table += "</table>";
     resultsDiv.innerHTML += table;
-  });
+    displayError({erro: ""})
+  } else if(data?.idx != null) {
+    let table = `
+        <table>
+          <tr>
+            <th>${data.idx + 1}</th>
+          </tr>`;
+
+    data.page.forEach(record => {
+      table += `<tr>
+        <td>${record}</td>
+      </tr>`;
+    });
+
+      table += "</table>";
+      resultsDiv.innerHTML += table;
+      displayError({erro: ""})
+  } else {
+    displayError(data);
+  }
 }
 
 function search() {
   let key = document.getElementById("searchKey").value;
   let startTime = performance.now();
 
-  mockApi("search", { key }).then((data) => {
-    let endTime = performance.now();
-    searchTime = endTime - startTime;
-    document.getElementById("tableScanBtn").classList.remove("disabled");
-    displayData(data);
-  });
-  // fetch(`${apiUrl}/search?key=${key}&records=${recordsPerPage}`)
-  //   .then((response) => response.json())
-  //   .then((data) => {
-  //     let endTime = performance.now();
-  //     searchTime = endTime - startTime;
-  //     document.getElementById("tableScanBtn").classList.remove("disabled");
-  //     displayData(data);
-  //   });
+  fetch(`${apiUrl}/search?key=${key}`)
+    .then((response) => response.json())
+    .then((data) => {
+      let endTime = performance.now();
+      searchTime = endTime - startTime;
+      document.getElementById("tableScanBtn").classList.remove("disabled");
+      displayData(data);
+    });
 }
 
 function tableScan() {
   let key = document.getElementById("searchKey").value;
   let startTime = performance.now();
 
-  mockApi("tableScan", { key }).then((data) => {
-    let endTime = performance.now();
-    scanTime = endTime - startTime;
-    displayData(data);
-    displayStatistics(data.stats);
-  });
-
-  // fetch(`${apiUrl}/tableScan?key=${key}&records=${recordsPerPage}`)
-  //   .then((response) => response.json())
-  //   .then((data) => {
-  //     let endTime = performance.now();
-  //     scanTime = endTime - startTime;
-  //     displayData(data);
-  //     displayStatistics(data.stats);
-  //   });
+  fetch(`${apiUrl}/tablescan?key=${key}`)
+    .then((response) => response.json())
+    .then((data) => {
+      let endTime = performance.now();
+      scanTime = endTime - startTime;
+      displayData(data);
+      displayStatistics(data);
+    });
 }
 
 function displayStatistics(stats) {
+  let data = JSON.parse(localStorage.getItem("initialData"));
   let statsDiv = document.getElementById("statistics");
   statsDiv.innerHTML = `
-        <p>Taxa de colisões: ${stats.collisionRate}%</p>
-        <p>Taxa de overflows: ${stats.overflowRate}%</p>
+        <p>Taxa de colisões: ${data.colision_rate}</p>
+        <p>Taxa de overflows: ${data.overflow_rate}</p>
         <p>Estimativa de custo da busca por índice: ${
-          stats.indexCost
+          stats.cost
         } leituras</p>
-        <p>Estimativa de custo do table scan: ${stats.scanCost} leituras</p>
+        <p>Estimativa de custo do table scan: ${stats.cost} leituras</p>
         <p>Diferença de tempo entre busca e table scan: ${(
           scanTime - searchTime
         ).toFixed(2)}ms</p>
     `;
+}
+
+function displayError(erro) {
+  let error = document.getElementById("erro");
+
+  error.innerHTML = `<p>${erro.erro}</p>`
 }
