@@ -25,29 +25,33 @@ class Page():
 
 
 class ListaPages():
-    def __init__(self, lim: int = 5, str_size: int = 100    ):
+    def __init__(self, regis: int, lim: int,str_size: int = 100):
         self.lim = lim
-        self.num_pages = 1
+        self.regis = regis
+        self.pointer = 0
+        self.num_pages = int(np.ceil(self.regis/self.lim))
         self.str_size = str_size
-        self.list_pages: list[Page] = [Page(str_size, lim=lim)]  # Inicia com uma página
+        self.list_pages: np.ndarray[Page] = np.array([Page(str_size, lim=lim) for _ in range(self.num_pages)], dtype=object)  # Inicia com uma página
     
     def add_item(self, item: str) -> None:
-        for page in self.list_pages:
-            if page.add_item(item):
-                return
-        # Se não conseguiu adicionar, cria nova página
-        self.num_pages += 1
-        new_page = Page(self.str_size, lim=self.lim)
-        new_page.add_item(item)
-        self.list_pages.append(new_page)
+        if self.list_pages[self.pointer].add_item(item):
+            return
+        self.pointer += 1
+        self.list_pages[self.pointer].add_item(item)
+    
     
     def get_num_regis(self)->int:
-        return self.lim * (len(self.list_pages)-1) + self.list_pages[-1].quant
+        return self.regis
     
     def get_tuples(self):
         for idx, page in enumerate(self.list_pages):
             for item in page:
                 yield (item, idx)
+    
+    def list_tuples(self):
+        return np.array(list(self.get_tuples()), dtype=object)
+        
+        
     
     def __iter__(self):
         for page in self.list_pages:
@@ -62,10 +66,13 @@ class ListaPages():
 
 
 if __name__ == "__main__":
-    lista_paginas = ListaPages(lim=2)
+    lista_paginas = ListaPages(lim=2, regis=3)
     lista_paginas.add_item("Adriano")
     lista_paginas.add_item("Marcelo")
     lista_paginas.add_item("Rodrigo")
+    
+    for i, tuple in enumerate(lista_paginas.list_tuples()):
+        print(i, tuple)
     
 
         

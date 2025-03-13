@@ -1,5 +1,11 @@
 import numpy as np
 
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.abspath(__name__).split("src")[0], "src"))
+
+
 # criar um bucket
 
 # armazena uma lista de tuplas
@@ -81,6 +87,20 @@ class ListaBuckets():
             
         if self.list_bucket[index].add_tuple(item):
             self.overflow_num += 1
+            
+    def add_from_list(self, array: np.ndarray):
+        hashList = array[:, 0]
+        func = np.vectorize(lambda x: self.hash_function(str(x), self.qunt))
+        hashList = func(hashList)
+        
+        for i, tuple in enumerate(array):
+            index = hashList[i]
+            
+            if self.list_bucket[index].full():
+                self.colision_num += 1
+            
+            if self.list_bucket[index].add_tuple((str(tuple[0]), tuple[1])):
+                self.overflow_num += 1
         
     def search(self, key: str)->int:
         index = self.hash_function(key, self.qunt)

@@ -2,6 +2,10 @@ from classes.interface.interface import InterfaceComands
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import time
+import os
+path = os.path.join(os.path.join(os.path.abspath(__name__).split("proj_banco_dados")[0], "proj_banco_dados"), "files")
+path_file = os.path.join(path, "words_alpha.txt")
+
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -25,14 +29,13 @@ def init_interface_object():
 
     registers_per_page = dados["rpp"]
     interface = InterfaceComands(
-        r"/home/henrique/Documents/pyProjects/proj_banco_dados/files/words_alpha.txt",
-        rpp=registers_per_page
+        path_file, rpp=registers_per_page
     )
 
     return jsonify({"status":"Interface incializada com sucesso",
         "pages":len(interface.listPages.list_pages), # número de páginas
         "buckets" : int(interface.buckets.qunt), # número de buckets
-        "fr" : int(interface.buckets.lim), # número de tuplas por buket
+        "regiBucket" : int(interface.buckets.lim), # número de tuplas por buket
         "colision_rate":f"{interface.colison_rate():.2%}", # taxa de colisão
         "overflow_rate":f"{interface.overflow_rate():.2%}", # taxa de overflow
         "rpp":int(registers_per_page), # registro por página
@@ -117,7 +120,7 @@ def search():
     
     item, idx = result
 
-    return jsonify({"status":"Table Scan concluido",
+    return jsonify({"status":"Hash Scan concluido",
         "time":f"{scan_time}",
         "cost":f"{interface.last_hash_consult_cost}",
         "key":item,
@@ -125,4 +128,4 @@ def search():
         "page": [str(item) for item in interface.listPages[idx]]}), 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True   )
+    app.run(host="0.0.0.0", port=8080, debug=True)

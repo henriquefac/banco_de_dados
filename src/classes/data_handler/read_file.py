@@ -2,9 +2,9 @@
 import sys
 import os
 
-sys.path.append("/home/henrique/Documents/pyProjects/proj_banco_dados/src/classes")
+sys.path.append(os.path.join(os.path.abspath(__name__).split("src")[0], "src"))
 
-from  data_structure.page import ListaPages
+from  classes.data_structure.page import ListaPages
 
 
 
@@ -12,15 +12,19 @@ class Data_Handler():
     def __init__(self, path: str, rpp: int):
         self.path = path
         self.rpp = rpp
+        self.lines = []
         
-    def get_data_to_page(self, page: ListaPages):
+    def get_data(self):
         with open(self.path, "r") as file:
-            lines = (file.read()).split("\n")
-            for line in lines[:10000]:
-                page.add_item(line)
+            self.lines = (file.read()).split("\n")
+            
                 
     def get_list_page(self)->ListaPages:
-        listPages = ListaPages(self.rpp, str_size=60)
-        self.get_data_to_page(listPages)
+        self.get_data()
+        listPages = ListaPages(len(self.lines), self.rpp, str_size=60)
+        
+        for line in self.lines:
+            listPages.add_item(line) 
+            
         return listPages
         

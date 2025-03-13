@@ -4,11 +4,11 @@ import time
 import sys
 import os
 
-sys.path.append("/home/henrique/Documents/pyProjects/proj_banco_dados/src/classes")
+sys.path.append(os.path.join(os.path.abspath(__name__).split("src")[0], "src"))
 
-from data_structure.bucket import Bucket, ListaBuckets
-from data_structure.page import Page, ListaPages
-from data_handler.read_file import Data_Handler as dh
+from classes.data_structure.bucket import Bucket, ListaBuckets
+from classes.data_structure.page import Page, ListaPages
+from classes.data_handler.read_file import Data_Handler as dh
 
 class Interface():
     def __init__(self, path, rpp):
@@ -27,29 +27,36 @@ class Interface():
         if self.buckets is not None:
             return self.buckets  # Retorna os buckets armazenados
         
-        regis = self.get_pages().get_num_regis()
+        regis = self.get_pages().regis
         tuples_per_bucket = self.get_tuple_per_bucket()
         self.buckets = ListaBuckets(regis, tuples_per_bucket)
         
         # adicionar tuplas para bucket
-        for i, page in enumerate(self.listPages):
-            for item in page:   
-                self.buckets.add_item((item, i))
+        self.buckets.add_from_list(self.listPages.list_tuples())
         
         return self.buckets
     
     # Calcular número de tuplas por bucket
     def get_tuple_per_bucket(self, safe_factor=4) -> int:
-        num_pages = max(len(self.get_pages().list_pages), 1)  # Evita divisão por zero
+        num_pages = self.get_pages().num_pages  # Evita divisão por zero
         num_buckets = num_pages * safe_factor
-        tuples_per_bucket = max(1, int(np.ceil(self.get_pages().get_num_regis() / num_buckets)))  # Garante pelo menos 1 tupla por bucket
+        tuples_per_bucket = max(1, int(np.ceil(self.get_pages().regis / num_buckets)))  # Garante pelo menos 1 tupla por bucket
         
         return tuples_per_bucket
 
     
     def init_interface(self):
+        start = time.time()
         self.get_pages()
+        fim_page = time.time() - start
+        
+        print(f"Tempo para passar o arquivo para página: {fim_page}")
+        
+        start = time.time()
         self.get_buckets()
+        fim_bucket = time.time() - start
+        
+        print(f"Tempo para passar tuplas da pagina para bucket: {fim_bucket}")
 
 # implementar comandos como table scan
 # busca por bucket
@@ -96,7 +103,7 @@ class InterfaceComands(Interface):
         return (self.buckets.colision_num / self.listPages.get_num_regis())
 
     def overflow_rate(self):
-        return (self.buckets.overflow_num / self.listPages.get_num_regis())
+        return (self.buckets.overflow_num / self.buckets.qunt)
 
     def compared_search_method(self, key):
         start = time.time()
