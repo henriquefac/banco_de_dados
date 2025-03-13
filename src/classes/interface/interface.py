@@ -79,17 +79,17 @@ class InterfaceComands(Interface):
         return None
     
     def get_page_by_key(self, key):
-        tuple_ress = self.buckets.search(key)
-        if tuple_ress is None:
+        idx = self.buckets.search(key)
+        if idx is None:
             return None
-        idx, self.last_hash_consult_cost = tuple_ress 
         
-        page = self.listPages[idx]
-        
-        for item in page:
-            self.last_hash_consult_cost += 1
-            if item == key:
-                return (item, idx)
+        self.last_hash_consult_cost = 0
+        pages = [self.listPages[idx]]
+        for page in pages:
+            self.last_hash_consult_cost += 1    
+            for item in page:
+                if item == key:
+                    return (item, idx)
         return None
         
     def colison_rate(self):

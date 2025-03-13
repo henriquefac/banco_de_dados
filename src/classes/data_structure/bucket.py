@@ -14,12 +14,15 @@ class Bucket():
         self.next: 'Bucket' = None
     
     def add_tuple(self, item: tuple)->bool:
-        if self.qunt >= self.lim:
+        if self.full():
             return self.overflow(item)
             
         self.tuple_list[self.qunt] = item
         self.qunt+=1
         return False
+    
+    def full(self):
+        return self.qunt >= self.lim
     
     def overflow(self, item: tuple) -> bool:
         if self.next is None:
@@ -29,13 +32,12 @@ class Bucket():
     
         return self.next.add_tuple(item)  # Continua o encadeamento
     
-    def search(self, key: str, cost=0)->tuple[int, int]:
+    def search(self, key: str)->int:
         for i in range(self.qunt):
-            cost += 1
             k, index = self.tuple_list[i]
             if k == key:
-                return (index, cost)
-        return self.next.search(key, cost) if self.next else None
+                return index
+        return self.next.search(key) if self.next else None
     
     def __str__(self):
         itens = [f"{k} {i}" for k, i in self.tuple_list[:self.qunt]]
@@ -67,8 +69,6 @@ class ListaBuckets():
         self.list_bucket: np.ndarray[Bucket] =  np.array([Bucket(lim) for _ in range(self.qunt)], dtype=object)
         self.hash_function = hash_function
         
-        self.idx_list = []
-        
         self.overflow_num = 0
         self.colision_num = 0
         
@@ -76,15 +76,13 @@ class ListaBuckets():
         key, _ = item
         index = self.hash_function(key, self.qunt)
         
-        if index in self.idx_list:
+        if self.list_bucket[index].full():
             self.colision_num += 1
-        else:
-            self.idx_list.append(index)
             
         if self.list_bucket[index].add_tuple(item):
             self.overflow_num += 1
         
-    def search(self, key: str)->tuple[int,int]:
+    def search(self, key: str)->int:
         index = self.hash_function(key, self.qunt)
         return self.list_bucket[index].search(key)
     
