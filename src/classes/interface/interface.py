@@ -77,7 +77,6 @@ class InterfaceComands(Interface):
         for i, page in enumerate(self.listPages):
             count += 1
             for item in page:
-                count += 1
                 if item == key:
                     self.last_table_search_cost = count 
                     return (item, i)

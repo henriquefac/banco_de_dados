@@ -72,9 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     })
       .then((response) => response.json())
-      .then(data => {
-        displayData(data)
-      })
+      .then(data => displayData(data))
       .catch( erro => displayError(erro))
   }
 });
@@ -92,11 +90,13 @@ function sendData() {
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log(data);
-      
       localStorage.setItem("initialData", JSON.stringify(data));
-      window.location.href = `results.html?records=${recordsPerPage}`;
+      window.location.href = `results.html`;
     });
+}
+
+function backToHomePage() {
+  window.location.href = `index.html`;
 }
 
 function fetchData(records) {
@@ -104,7 +104,7 @@ function fetchData(records) {
   displayData(data);
 }
 
-function displayData(data) {
+function displayData(data, item = "") {
   let resultsDiv = document.getElementById("tables-container");
   resultsDiv.innerHTML = "";
   
@@ -112,7 +112,7 @@ function displayData(data) {
     let table = `
     <table>
       <tr>
-        <th>Página: ${data.first.idx + 1}</th>
+        <th>Página ${data.first.idx + 1}</th>
       </tr>`;
 
     data.first.page.forEach((record) => {
@@ -125,7 +125,7 @@ function displayData(data) {
     table += `
     <table>
       <tr>
-        <th>Página: ${data.last.idx + 1}</th>
+        <th>Página ${data.last.idx + 1}</th>
       </tr>`;
 
     data.last.page.forEach((record) => {
@@ -137,15 +137,18 @@ function displayData(data) {
     resultsDiv.innerHTML += table;
     displayError({erro: ""})
   } else if(data?.idx != null) {
+    
     let table = `
         <table>
           <tr>
-            <th>${data.idx + 1}</th>
+            <th>Página ${data.idx + 1}</th>
           </tr>`;
 
     data.page.forEach(record => {
+      let outlineStyle = record === item ? 'style="border: 2px solid red;"' : "";
+
       table += `<tr>
-        <td>${record}</td>
+        <td ${outlineStyle}>${record}</td>
       </tr>`;
     });
 
@@ -167,7 +170,10 @@ function search() {
       let endTime = performance.now();
       searchTime = endTime - startTime;
       document.getElementById("tableScanBtn").classList.remove("disabled");
-      displayData(data);
+      localStorage.setItem("searchTime", JSON.stringify(data.time))
+      localStorage.setItem("searchCost", JSON.stringify(data.cost))
+      displayData(data, key);
+      displayStatistics(data);
     });
 }
 
@@ -180,29 +186,46 @@ function tableScan() {
     .then((data) => {
       let endTime = performance.now();
       scanTime = endTime - startTime;
-      displayData(data);
+      localStorage.setItem("tableScanTime", JSON.stringify(data.time))
+      localStorage.setItem("tableScanCost", JSON.stringify(data.cost))
+      displayData(data, key);
       displayStatistics(data);
     });
 }
 
 function displayStatistics(stats) {
   let data = JSON.parse(localStorage.getItem("initialData"));
+
+  let timeSearch = JSON.parse(localStorage.getItem("searchTime"));
+  timeSearch = timeSearch != undefined ? timeSearch : "0";
+  let costSearch = JSON.parse(localStorage.getItem("searchCost"));
+  costSearch = costSearch != undefined ? costSearch + " leituras" : "Ainda não foi feito nenhuma leitura";
+
+
+  let timeScan = JSON.parse(localStorage.getItem("tableScanTime"));
+  timeScan = timeScan != undefined ? timeScan : "0";
+  let costScan = JSON.parse(localStorage.getItem("tableScanCost"));
+  costScan = costScan != undefined ? costScan + " leituras" : "Ainda não foi feito nenhuma leitura";
+  
+
+
   let statsDiv = document.getElementById("statistics");
+
+  let diffInTime = Math.abs((1000 * parseFloat(timeSearch)) - (1000 * parseFloat(timeScan)));
+  console.log(diffInTime);
+  
   statsDiv.innerHTML = `
         <p>Taxa de colisões: ${data.colision_rate}</p>
         <p>Taxa de overflows: ${data.overflow_rate}</p>
-        <p>Estimativa de custo da busca por índice: ${
-          stats.cost
-        } leituras</p>
-        <p>Estimativa de custo do table scan: ${stats.cost} leituras</p>
+        <p>Estimativa de custo da busca por índice: ${costSearch}</p>
+        <p>Estimativa de custo do table scan: ${costScan}</p>
         <p>Diferença de tempo entre busca e table scan: ${(
-          scanTime - searchTime
+          diffInTime
         ).toFixed(2)}ms</p>
     `;
 }
 
 function displayError(erro) {
-  let error = document.getElementById("erro");
-
-  error.innerHTML = `<p>${erro.erro}</p>`
+  if(erro.erro == "" || erro.erro == undefined) return;
+  alert(erro.erro)
 }

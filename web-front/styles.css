@@ -106,3 +106,20 @@ tr {
     width: 90%;
   }
 }
+
+#homePage {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 10px 15px;
+  background-color: #ffeaec;
+  color: rgb(0, 0, 0);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#homePage:hover {
+  background-color: #e84118;
+}
